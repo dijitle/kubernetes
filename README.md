@@ -212,7 +212,7 @@ kubeadm join 192.168.1.200:6443 --token k7n7ca.cr8rif78uf82yj9t --discovery-toke
         kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
         ```
         5. Run `kubectl proxy` and go to `http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/`
-        6. ![dashboardshot](https://github.com/dijitle/kubernetes/blob/master/Screenshots/dashboard.png?raw=true) 
+        6. ![dashboardshot](https://github.com/dijitle/kubernetes/blob/bdec0a7f704650834998cf568911362d674c3f73/Screenshots/dashboard.png?raw=true) 
     5. Let's add traefik ingress controller
         1. Detailed instructions located [here](https://docs.traefik.io/user-guide/kubernetes/)
         2. Create RBAC
