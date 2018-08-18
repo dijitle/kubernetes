@@ -56,6 +56,67 @@ I will be creating a 1 master, 2 worker node setup.
         9. Use an Entire Disk
         10. Choose the one and only 127 volume, done and continue
         11. Enter your name, server name, user, password, optional SSH if you want
-        12. Don't install anything else, let it finish
+        12. Don't install anything else, let it finish Reboot
+        13. Login as the user you specified 
+        14. Elevate to root via `sudo -i` and enter your password again, this will simplify the rest of the commands
+            ```bash
+            sudo -i
+            ```
+        15. Make sure everything installed and up-to-date
+            ```bash 
+            apt-get update -y && apt-get upgrade -y
+            ```
+        16. Install hyper-V tools (this will allow you to see the IP in the networking tab in Hyper-V Manager)
+        ```bash
+        apt-get install linux-image-virtual linux-tools-virtual linux-cloud-tools-virtual -y
+        ```
+        17. Install docker 
+            ```bash
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+            add-apt-repository "deb https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+            apt-get update && apt-get install -y docker-ce            
+            ```
+        18. Install Kubeadm
+            ```bash
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+            cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+            deb http://apt.kubernetes.io/ kubernetes-xenial main
+            EOF
+            apt-get update
+            apt-get install -y kubelet kubeadm kubectl
+            ```
+        19. Update `/etc/cloud/cloud.cfg` in your favorite editor
+            1. Set `disable_root` to `false` (we'll want to remote in via root)
+            2. Set `preserve_hostname` to `true` (we need this when we change the hostnames for the later VMs to persist)
+            3. Save and exit
+        20. Set `kubectl` alias and auto-complete
+            1. As root edit your `~/.bashrc` file
+            2. Find the alias section and add the following
+            ```bash
+            alias k=kubectl
+            source <(kubectl completion bash | sed s/kubectl/k/g)
+            ```
+            3. Save and exit, next time you load the shell, you'll be able to do things like `k desc<TAB> no<TAB> diji<TAB>` Cool stuff!
+        21. Disable swap
+            1. Run 
+            ```bash
+            swapoff -a
+            ```
+            2. Edit `/etc/fstab`, comment out the line with `/swap.img` with a `#`
+            3. Save and exit
+        22. Set up SSH keys for root
+            1. On your local system, create public/private keypairs via 
+            ```bash
+            ssh-keygen -t rsa -b 4096
+            ```
+            2. Save it to your user's .ssh folder, you can name it k8, will generate `k8` and `k8.pub`
+            3. Copy the `k8.pub` text and paste it into `/root/.ssh/authorized_keys`
+            4. You should now be able to SSH into the machine via (IP may be different, we will change later)
+            ```bash
+            ssh -i ~/.ssh/k8 root@192.168.1.25
+            ```
+        
+
+            
 
 
