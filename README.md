@@ -26,7 +26,7 @@ I will be creating a 1 master, 2 worker node setup.
     4. Give it a name (mine will be `Kubernetes`)
     5. Under `Connection type` make sure `External network` is selected and your network adapter is selected in the dropdown and check box for `Allow management OS to share this network adapater` is checked. (Note, this will kill your network connection temporarily while it creates the new switch this will be used for your VMs and your host computer as well.
     6. Click `OK`
-    * ![virtualswitchscreenshot](https://github.com/dijitle/kubernetes/blob/master/Screenshots/hyper-venabled.png?raw=true) 
+    * ![virtualswitchscreenshot](https://github.com/dijitle/kubernetes/blob/master/Screenshots/virtualswitch.png?raw=true) 
 6. Create VMs
     1. Click `Action` > `New` > `VirtualMachine...`
     2. Give your computer a name (mine first one will be called `dijitle-k8s-m` for the master `dijitle-k8s-1` and `dijitle-k8s-2` for the worker nodes)
@@ -57,5 +57,5 @@ I will be creating a 1 master, 2 worker node setup.
         10. Choose the one and only 127 volume, done and continue
         11. Enter your name, server name, user, password, optional SSH if you want
         12. Don't install anything else, let it finish
-        
+
 
