@@ -16,3 +16,18 @@ subjects:
 - kind: ServiceAccount
   name: admin-user
   namespace: kube-system
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard-ingress
+  namespace: kube-system
+spec:
+  rules:
+  - host: dijitle.io
+    http:
+      paths:
+      - path: /kube
+        backend:
+          serviceName: kubernetes-dashboard
+          servicePort: 443
