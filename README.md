@@ -236,6 +236,7 @@ kubeadm join 192.168.1.200:6443 --token k7n7ca.cr8rif78uf82yj9t --discovery-toke
         kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/ui.yaml
         ```
         6. ![traefikshot](https://github.com/dijitle/kubernetes/blob/master/Screenshots/traefik.png?raw=true) 
+    6. Now we want to be set 
 
 
 

@@ -24,10 +24,10 @@ metadata:
   namespace: kube-system
 spec:
   rules:
-  - host: dijitle.io
+  - host: kube.dijitle.io
     http:
       paths:
-      - path: /kube
+      - path: /
         backend:
           serviceName: kubernetes-dashboard
           servicePort: 443

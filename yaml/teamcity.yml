@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-server
+  namespace: teamcity
+  labels:
+    app: teamcity-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teamcity-server
+  template:
+    metadata:
+      labels:
+        app: teamcity-server
+    spec:
+      containers:
+      - name: teamcity-server
+        image: jetbrains/teamcity-server:2018.1.1
+        ports:
+        - containerPort: 8111
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcity-agent
+  namespace: teamcity
+  labels:
+    app: teamcity-agent
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: teamcity-agent
+  template:
+    metadata:
+      labels:
+        app: teamcity-agent
+    spec:
+      containers:
+      - name: teamcity-agent
+        image: jetbrains/teamcity-agent:2018.1.1
+        env:
+        - name: SERVER_URL
+          value: http://teamcity-server
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: teamcity-server
+  namespace: teamcity
+spec:
+  selector:
+    app: teamcity-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8111
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: teamcity-server
+  namespace: teamcity
+spec:
+  rules:
+  - host: teamcity.dijitle.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: teamcity-server
+          servicePort: 80
