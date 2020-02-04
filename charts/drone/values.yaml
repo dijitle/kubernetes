@@ -26,5 +26,5 @@ sourceControl:
   secret:
   github:
     clientID: 7902e236c560f733b765
-    clientSecretValue: 860a905b3c0f61523a471424ff1aa4ee547fe590
+    clientSecretValue: 
     
