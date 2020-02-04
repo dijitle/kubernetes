@@ -1,0 +1,30 @@
+ingress:
+  enabled: true
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: traefik
+  hosts:
+  - drone.dijitle.dev
+
+persistence:
+  enabled: true
+  storageClass: nfs-client
+  annotations:
+     volume.beta.kubernetes.io/storage-class: nfs-client
+
+server:
+  host: drone.dijitle.dev
+  protocol: https
+  adminUser: dijitle
+
+metrics:
+  prometheus:
+    enabled: true
+
+sourceControl:
+  provider: github
+  secret:
+  github:
+    clientID: 7902e236c560f733b765
+    clientSecretValue: 860a905b3c0f61523a471424ff1aa4ee547fe590
+    

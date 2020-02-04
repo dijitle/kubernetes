@@ -68,5 +68,5 @@ extraScrapeConfigs: |
     - source_labels: [__meta_kubernetes_pod_container_name]
       action: replace
       target_label: job
-
+      
 # helm upgrade -i prometheus stable/prometheus -n kube-system -f values.yaml
