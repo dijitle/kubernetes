@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  Version: "{{ .Values.appVersion }}"
+  ASPNETCORE_HTTPS_PORT: ""
+  ASPNETCORE_URLS: "http://+"
+  {{- if .Values.additionalConfigMaps -}}
+    {{ .Values.additionalConfigMaps | toYaml | nindent 2 }}
+  {{- end -}}

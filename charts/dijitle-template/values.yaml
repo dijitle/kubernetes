@@ -1,0 +1,30 @@
+app:
+
+appVersion: "0.0.0"
+
+replicas: 1
+
+branch:
+
+secrets: {}
+  #Secret1: Secret1
+additionalConfigMaps: {}
+  #Value1: Value1
+
+env: dev
+
+ingress: 
+
+image:
+  registry: dijitle
+  name: 
+  tag:
+
+health: /health
+targetPort : 80
+port : 80
+
+resources:
+  requests:
+    memory: 64Mi
+    cpu: 250m

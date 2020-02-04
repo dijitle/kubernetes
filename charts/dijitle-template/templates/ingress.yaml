@@ -1,0 +1,18 @@
+{{- if .Values.ingress -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    - host: {{ .Values.ingress }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name | replace "." "-" }}-service
+              servicePort: http
+{{- end -}}

@@ -74,7 +74,9 @@ source <(kubectl completion bash | sed s/kubectl/k/g)
 
 ```bash
 swapoff -a
-systemctl disable dphys-swapfile.service
+sudo dphys-swapfile swapoff && \
+sudo dphys-swapfile uninstall && \
+sudo update-rc.d dphys-swapfile remove
 ```
 
 4. Edit `/etc/fstab`, comment out the line with /swap.img with a #, Save and exit
@@ -112,4 +114,27 @@ UUID=5c456ca8-829c-470c-b211-e01e3971c479 /nfs ext4 defaults,noatime,rw,nofail 0
 nano /etc/exports
 # /nfs *(rw,sync,no_root_squash,no_subtree_check)
 exportfs -a
+```
+
+### HAProxy + Let's Encrypt
+
+1.
+
+```bash
+apt-get update && apt-get install -y certbot
+```
+
+### Install K8s
+
+```bash
+sysctl net.bridge.bridge-nf-call-iptables=1
+
+nano /etc/sysctl.conf
+#uncomment net.ipv4.ip_forward = 1 and add net.ipv4.ip_nonlocal_bind=1.
+
+sudo kubeadm init --control-plane-endpoint "dijitle-k8s-worker-0:6443" --upload-certs
+```
+
+```bash
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ```

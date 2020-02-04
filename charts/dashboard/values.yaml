@@ -1,0 +1,5 @@
+metrics-server:
+  image:
+    repository: gcr.io/google_containers/metrics-server-arm
+  args: 
+  - --kubelet-insecure-tls

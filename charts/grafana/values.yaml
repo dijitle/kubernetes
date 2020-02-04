@@ -1,0 +1,18 @@
+ingress:
+  enabled: true
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+    kubernetes.io/ingress.class: traefik
+  hosts:
+  - grafana.dijitle.dev
+
+persistence:
+  enabled: true
+  storageClassName: nfs-client
+  annotations:
+     volume.beta.kubernetes.io/storage-class: nfs-client
+
+service:
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"

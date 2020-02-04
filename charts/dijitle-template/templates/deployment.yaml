@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        app: {{ required "You must specify a .Values.app" .Values.app }}
+        branch: {{ .Values.branch | default "master" }}
+    spec:
+      containers:
+      - name: {{ .Release.Name | replace "." "-" }}
+        image: {{ .Values.image.registry }}/{{ .Values.image.name | default .Values.app }}:{{ .Values.image.tag | default .Values.appVersion }}
+        ports:
+        - containerPort: {{ .Values.targetPort }}
+        envFrom:
+        {{- if .Values.secrets }}
+        - secretRef:
+            name: {{ .Release.Name }}-secret
+        {{- end }}
+        - configMapRef:
+            name: {{ .Release.Name }}-configmap
+        resources: 
+{{ .Values.resources | toYaml | indent 10}}
+        {{- if .Values.health }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.health }}
+            port: {{ .Values.targetPort }}
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.health }}
+            port: {{ .Values.targetPort }}
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        {{- end }}

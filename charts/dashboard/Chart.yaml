@@ -1,0 +1,8 @@
+apiVersion: 2
+name: dashboard
+version: 1.0.0
+appVersion: v2.0.0-rc3
+dependencies:
+- name: metrics-server
+  version: 2.8.9
+  repository: https://kubernetes-charts.storage.googleapis.com/

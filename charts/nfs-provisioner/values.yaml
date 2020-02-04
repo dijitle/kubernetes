@@ -1,0 +1,5 @@
+nfs:
+  server: 192.168.108.100
+  path: /nfs
+image:
+  repository: quay.io/external_storage/nfs-client-provisioner-arm
