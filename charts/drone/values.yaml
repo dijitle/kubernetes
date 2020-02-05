@@ -17,14 +17,10 @@ server:
   protocol: https
   adminUser: dijitle
 
-metrics:
-  prometheus:
-    enabled: true
-
 sourceControl:
   provider: github
   secret:
   github:
     clientID: 7902e236c560f733b765
-    clientSecretValue: 
+    clientSecretValue: #yourgitclientsecret
     

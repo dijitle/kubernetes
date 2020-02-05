@@ -68,5 +68,10 @@ extraScrapeConfigs: |
     - source_labels: [__meta_kubernetes_pod_container_name]
       action: replace
       target_label: job
+  - job_name: 'drone'
+    bearer_token: #yourbearertoken
+    static_configs:
+    - targets: ['drone-drone.ci.svc.cluster.local']
+      
       
 # helm upgrade -i prometheus stable/prometheus -n kube-system -f values.yaml
