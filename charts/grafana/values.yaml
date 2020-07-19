@@ -16,3 +16,9 @@ service:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "3000"
+
+env:
+  GF_AUTH_ANONYMOUS_ENABLED: true
+  GF_AUTH_ANONYMOUS_ORG_NAME: "Dijitle"
+
+#helm upgrade -i grafana stable/grafana -n monitoring -f .\charts\grafana\values.yaml
