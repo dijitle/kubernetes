@@ -10,14 +10,14 @@ I will be creating a 3 master, 4 worker node setup. (7, heptagon, kubernetes, ge
   - 3x raspberry pi 3s w/1GB RAM for master nodes
   - 4x raspberry pi 4s w/4GB RAM for worker nodes
     - One of these will be my NFS and loadbalancing server
+- 7 PoE raspberry pi hats
+- 4 128GB usb 3 flash drives
 - Router running dd-wrt firmware
-- 8 port network switch
-- 12V 240 watt powersupply
-- 7x USB buck converters
-- USB cables (type C for rpi 4s)
-- Ethranet cables
-- Wire for soldering buck converters
-- portable hard drive + enclosure with USB 3
+- 8 port network switch with PoE
+- 9 Ethranet cables
+  - 7 for pis
+  - 1 router to switch
+  - 1 router to internet
 
 ### Network Topology
 
@@ -37,7 +37,7 @@ Only 80 and 443 should be exposed to the internet!
 
 The three master nodes will run [keepalived](https://www.keepalived.org/) which will create a highly-available virutal IP (192.168.108.10). Master-1 will be primary and should it go down, master-2 will take over, and should both go down, master-3 will take over. If all three go down...well, then it's down.
 
-1rfe[guide](https://www.digitalocean.com/community/tutorials/how-to-set-up-highly-available-web-servers-with-keepalived-and-floating-ips-on-ubuntu-14-04)
+[guide](https://www.digitalocean.com/community/tutorials/how-to-set-up-highly-available-web-servers-with-keepalived-and-floating-ips-on-ubuntu-14-04)
 
 Each master node will run HA-Proxy that will reverse-proxy and load-balance traffic and run let's encrypt (certbot) to create a valid public certificate.
 
@@ -167,12 +167,20 @@ UUID=<youruuidhere> /srv ext4 defaults,noatime,rw,nofail 0 0
 service docker restart
 ```
 
-### HAProxy + Let's Encrypt
+### Let's Encrypt
 
 1.
 
 ```bash
 apt-get update && apt-get install -y certbot
+```
+
+```bash
+certbot
+```
+
+```bash
+cat /etc/letsencrypt/live/dijitle.com/fullchain.pem /etc/letsencrypt/live/dijitle.com/privkey.pem > /home/pi/dijitle.crt
 ```
 
 ```bash
@@ -186,9 +194,16 @@ sysctl net.bridge.bridge-nf-call-iptables=1
 
 nano /etc/sysctl.conf
 #uncomment net.ipv4.ip_forward = 1 and add net.ipv4.ip_nonlocal_bind=1.
-
-sudo kubeadm init --control-plane-endpoint "dijitle-k8s-worker-0:6443" --upload-certs
 ```
+
+#### On master 1
+
+```bash
+kubeadm init --control-plane-endpoint "dijitle-k8s-worker-0:6443" --upload-certs
+```
+
+Grab master join command, run on other masters
+Grab worker join command, run on workers
 
 ```bash
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
