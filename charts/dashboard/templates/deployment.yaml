@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: kubernetesui/dashboard:v2.0.0-rc3
+          image: kubernetesui/dashboard:{{ .Values.image.tag }}
           imagePullPolicy: Always
           ports:
             - containerPort: 9090

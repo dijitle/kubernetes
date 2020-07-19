@@ -1,5 +1,12 @@
+image:
+  tag: v2.0.3
 metrics-server:
   image:
-    repository: gcr.io/google_containers/metrics-server-arm
+    repository: rancher/metrics-server
+    tag: v0.3.6-arm
   args: 
-  - --kubelet-insecure-tls
+    - --kubelet-insecure-tls
+  rbac:
+    pspEnabled: true
+  hostNetwork:
+    enabled: true
