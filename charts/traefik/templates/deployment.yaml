@@ -18,7 +18,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik
-          image: traefik:2.1.3
+          image: traefik:{{ .Values.image.tag }}
           readinessProbe:
             httpGet:
                 path: /ping
