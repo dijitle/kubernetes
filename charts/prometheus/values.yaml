@@ -12,12 +12,13 @@ alertmanager:
     - alertmanager.dijitle.dev
 
 server:
-  extraFlags:
-    - storage.tsdb.no-lockfile
   persistentVolume:
+    enabled: true
     storageClass: nfs-client
+    size: 16Gi
     annotations:
       volume.beta.kubernetes.io/storage-class: nfs-client
+  retention: 7d
   ingress:
     enabled: true
     annotations:
@@ -35,10 +36,10 @@ pushgateway:
     hosts:
     - pushgateway.dijitle.dev
 
-kubeStateMetrics:
+kube-state-metrics:
   image: 
-    repository: carlosedp/kube-state-metrics
-    tag: v1.7.2
+    repository: "carlosedp/kube-state-metrics"
+    tag: "v1.9.5"
 
 nodeExporter:
   tolerations:
@@ -69,9 +70,9 @@ extraScrapeConfigs: |
       action: replace
       target_label: job
   - job_name: 'drone'
-    bearer_token: #yourbearertoken
+    bearer_token: ...
     static_configs:
-    - targets: ['drone-drone.ci.svc.cluster.local']
+    - targets: ['drone.drone.svc.cluster.local']
       
       
-# helm upgrade -i prometheus stable/prometheus -n kube-system -f values.yaml
+# helm upgrade -i prometheus stable/prometheus -n monitoring -f .\charts\prometheus\values.yaml
