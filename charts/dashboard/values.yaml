@@ -1,10 +1,10 @@
 image:
-  tag: v2.0.3
+  tag: v2.2.0
 metrics-server:
   image:
     repository: rancher/metrics-server
-    tag: v0.3.6-arm
-  args: 
+    tag: v0.4.1-arm
+  args:
     - --kubelet-insecure-tls
   rbac:
     pspEnabled: true

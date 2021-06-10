@@ -15,29 +15,29 @@ I will be creating a 3 master, 4 worker node setup. (7, heptagon, kubernetes, ge
 - Router running dd-wrt firmware
 - 8 port network switch with PoE
 - 9 Ethranet cables
-  - 7 for pis
-  - 1 router to switch
+  - 7 pis to switch
+  - 1 switch to router
   - 1 router to internet
 
 ### Network Topology
 
-| Host                 | Static IP       | Port Forward (router)     |
-| -------------------- | --------------- | ------------------------- |
-| dijitle-k8s-router   | 192.168.108.1   | 8080 -> 80                |
-| keepalived virtualIP | 192.168.108.10  | 22, 80, 443, 6443 -> 6444 |
-| dijitle-k8s-master-1 | 192.168.108.11  |
-| dijitle-k8s-master-2 | 192.168.108.12  |
-| dijitle-k8s-master-3 | 192.168.108.13  |
-| dijitle-k8s-worker-1 | 192.168.108.101 |
-| dijitle-k8s-worker-2 | 192.168.108.102 |
-| dijitle-k8s-worker-3 | 192.168.108.103 |
-| dijitle-k8s-worker-4 | 192.168.108.104 |
+| Host                 | Static IP       | Port Forward (router) | Purpose             |
+| -------------------- | --------------- | --------------------- | ------------------- |
+| dijitle-k8s-router   | 192.168.108.1   | 8080 -> 80            | Router admin        |
+| virtualIP            | 192.168.108.10  | 80, 443, 6443         | http(s) and k8s api |
+| dijitle-k8s-master-1 | 192.168.108.11  | 9011 -> 22            | ssh                 |
+| dijitle-k8s-master-2 | 192.168.108.12  | 9012 -> 22            | ssh                 |
+| dijitle-k8s-master-3 | 192.168.108.13  | 9013 -> 22            | ssh                 |
+| dijitle-k8s-worker-1 | 192.168.108.101 | 9101 -> 22            | ssh                 |
+| dijitle-k8s-worker-2 | 192.168.108.102 | 9102 -> 22            | ssh                 |
+| dijitle-k8s-worker-3 | 192.168.108.103 | 9103 -> 22            | ssh                 |
+| dijitle-k8s-worker-4 | 192.168.108.104 | 9104 -> 22            | ssh                 |
 
 Only 80 and 443 should be exposed to the internet!
 
-The three master nodes will run [keepalived](https://www.keepalived.org/) which will create a highly-available virutal IP (192.168.108.10). Master-1 will be primary and should it go down, master-2 will take over, and should both go down, master-3 will take over. If all three go down...well, then it's down.
+The three master nodes will run keepalived which will create a highly-available virutal IP (192.168.108.10). Master-1 will be primary and should it go down, master-2 will take over, and should both go down, master-3 will take over. If all three go down...well, then it's down.
 
-[guide](https://www.digitalocean.com/community/tutorials/how-to-set-up-highly-available-web-servers-with-keepalived-and-floating-ips-on-ubuntu-14-04)
+[guide](https://stackoverflow.com/questions/35482083/how-to-create-floating-ip-and-use-it-to-configure-haproxy)
 
 Each master node will run HA-Proxy that will reverse-proxy and load-balance traffic and run let's encrypt (certbot) to create a valid public certificate.
 
@@ -47,9 +47,9 @@ Each master node will run HA-Proxy that will reverse-proxy and load-balance traf
 | ------------- | ------------------------ | --------------------------- |
 | 80            | 443 (redirect 301)       |                             |
 | 443           | 30330 (traefik nodePort) | worker 1-4 (round robin LB) |
-| 6444          | 6443 (kubernetes api)    | master 1-3 (round robin LB) |
+| 6443          | 6443 (kubernetes api)    | master 1-3 (round robin LB) |
 
-### Services
+### Kubernetes Services
 
 - traefik
 - kubernetes dashboard
@@ -57,7 +57,6 @@ Each master node will run HA-Proxy that will reverse-proxy and load-balance traf
 - fluent-bit
 - loki
 - grafana
-- drone
 
 ## Creating the cluster
 
@@ -65,9 +64,11 @@ Each master node will run HA-Proxy that will reverse-proxy and load-balance traf
 2. balenaEtcher the SDs with the images
 3. enable SSH access (put empty `ssh` file in boot partition)
 4. set router to forward port 22 to the pi
-5. Run `sudo raspi-config` set hostname, change password, locale,timezone accordingly, enable ssh
+5. Run `sudo raspi-config` set hostname, change password, locale, timezone accordingly, enable ssh
 
-1) Install docker (as sudo)
+## Installing prerequisite
+
+1. Install docker (as sudo)
 
 ```
 curl -sSL https://get.docker.com | sh
@@ -96,44 +97,13 @@ update-rc.d dphys-swapfile remove && \
 systemctl disable dphys-swapfile
 ```
 
-4. Edit `/etc/fstab`, comment out the line with /swap.img with a #, Save and exit
-
-5. install nfs
+4. add to /boot/cmdline.txt
 
 ```bash
-apt-get install nfs-kernel-server
-mkdir /nfs
-mount /dev/sda1 /nfs
-chmod 777 -R /nfs
+cgroup_enable=cpuset cgroup_enable=memory
 ```
 
-6. Automount
-
-```bash
-ls -l /dev/disk/by-uuid/
-```
-
-grab `../../sda1` UUID
-
-```bash
-nano /etc/fstab
-```
-
-7. put in (replacing with your UUID)
-
-```bash
-UUID=5c456ca8-829c-470c-b211-e01e3971c479 /nfs ext4 defaults,noatime,rw,nofail 0 0
-```
-
-8. add exports
-
-```bash
-nano /etc/exports
-# /nfs *(rw,sync,no_root_squash,no_subtree_check)
-exportfs -a
-```
-
-9. add usb drive
+4. add usb drive (worker nodes)
 
 ```
 parted /dev/sda
@@ -153,7 +123,7 @@ nano /etc/fstab
 UUID=<youruuidhere> /srv ext4 defaults,noatime,rw,nofail 0 0
 ```
 
-10. Update /etc/docker/daemon.json
+5. Update /etc/docker/daemon.json
 
 ```
 {
@@ -161,11 +131,19 @@ UUID=<youruuidhere> /srv ext4 defaults,noatime,rw,nofail 0 0
 }
 ```
 
-11. Restart docker
+6. Restart docker
 
 ```bash
 service docker restart
 ```
+
+### Keepalived
+
+```bash
+apt-get install keepalived
+```
+
+copy config to /etc/keepalived/keepalived.conf, change priority 102 in decenting order
 
 ### Let's Encrypt
 
@@ -176,15 +154,15 @@ apt-get update && apt-get install -y certbot
 ```
 
 ```bash
-certbot
+certbot certonly
 ```
 
 ```bash
-cat /etc/letsencrypt/live/dijitle.com/fullchain.pem /etc/letsencrypt/live/dijitle.com/privkey.pem > /home/pi/dijitle.crt
+cat /etc/letsencrypt/live/dijitle.com/fullchain.pem /etc/letsencrypt/live/dijitle.com/privkey.pem > /etc/ssl/haproxy.pem
 ```
 
 ```bash
-docker run  -p 6443:6443 -p 443:443 -p 80:80 -v /home/pi/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg -v /home/pi/server.crtkey:/etc/ssl/haproxy.pem -it haproxy
+docker run --name haproxy -p 192.168.108.10:6444:6444 -p 192.168.108.10:443:443 -p 192.168.108.10:80:80 -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg -v /etc/ssl/haproxy.pem:/etc/ssl/haproxy.pem -d haproxy
 ```
 
 ### Install K8s
@@ -199,7 +177,7 @@ nano /etc/sysctl.conf
 #### On master 1
 
 ```bash
-kubeadm init --control-plane-endpoint "dijitle-k8s-worker-0:6443" --upload-certs
+kubeadm init --control-plane-endpoint "192.168.108.10:6444" --upload-certs --ignore-preflight-errors=Mem
 ```
 
 Grab master join command, run on other masters

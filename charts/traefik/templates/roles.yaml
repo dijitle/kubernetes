@@ -16,8 +16,10 @@ rules:
       - watch
   - apiGroups:
       - extensions
+      - networking.k8s.io
     resources:
       - ingresses
+      - ingressclasses
     verbs:
       - get
       - list
@@ -32,38 +34,12 @@ rules:
       - traefik.containo.us
     resources:
       - middlewares
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - traefik.containo.us
-    resources:
       - ingressroutes
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - traefik.containo.us
-    resources:
-      - ingressroutetcps
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - traefik.containo.us
-    resources:
-      - tlsoptions
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - traefik.containo.us
-    resources:
       - traefikservices
+      - ingressroutetcps
+      - ingressrouteudps
+      - tlsoptions
+      - tlsstores
     verbs:
       - get
       - list
@@ -75,7 +51,7 @@ kind: ServiceAccount
 metadata:
   namespace: kube-system
   name: traefik-ingress-controller
-  
+
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1

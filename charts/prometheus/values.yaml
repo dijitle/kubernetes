@@ -1,15 +1,15 @@
-alertmanager:  
+alertmanager:
   persistentVolume:
     storageClass: nfs-client
     annotations:
-     volume.beta.kubernetes.io/storage-class: nfs-client
+      volume.beta.kubernetes.io/storage-class: nfs-client
   ingress:
     enabled: true
     annotations:
       traefik.frontend.rule.type: PathPrefixStrip
       kubernetes.io/ingress.class: traefik
     hosts:
-    - alertmanager.dijitle.dev
+      - alertmanager.dijitle.dev
 
 server:
   persistentVolume:
@@ -25,7 +25,7 @@ server:
       traefik.frontend.rule.type: PathPrefixStrip
       kubernetes.io/ingress.class: traefik
     hosts:
-    - prometheus.dijitle.dev
+      - prometheus.dijitle.dev
 
 pushgateway:
   ingress:
@@ -34,10 +34,10 @@ pushgateway:
       traefik.frontend.rule.type: PathPrefixStrip
       kubernetes.io/ingress.class: traefik
     hosts:
-    - pushgateway.dijitle.dev
+      - pushgateway.dijitle.dev
 
 kube-state-metrics:
-  image: 
+  image:
     repository: "carlosedp/kube-state-metrics"
     tag: "v1.9.5"
 
@@ -45,7 +45,6 @@ nodeExporter:
   tolerations:
     - key: "node-role.kubernetes.io/master"
       effect: "NoSchedule"
-
 
 extraScrapeConfigs: |
   - job_name: 'weave'
@@ -69,10 +68,5 @@ extraScrapeConfigs: |
     - source_labels: [__meta_kubernetes_pod_container_name]
       action: replace
       target_label: job
-  - job_name: 'drone'
-    bearer_token: ...
-    static_configs:
-    - targets: ['drone.drone.svc.cluster.local']
-      
-      
-# helm upgrade -i prometheus stable/prometheus -n monitoring -f .\charts\prometheus\values.yaml
+
+# helm upgrade -i prometheus stable/prometheus -n monitoring -f ./charts/prometheus/values.yaml
