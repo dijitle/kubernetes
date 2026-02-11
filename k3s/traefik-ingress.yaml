@@ -1,0 +1,59 @@
+# traefik-dashboard-ingress.yaml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: traefik-dashboard
+  namespace: kube-system
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+  - name: dashboard 
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9100  
+    targetPort: 9100
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: kube-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web  # HTTP only
+spec:
+  ingressClassName: traefik  # or omit if default
+  rules:
+  - host: traefik.dijitle.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: traefik-dashboard  # the service created by Helm
+            port:
+              number: 8080   # internal traefik port for API/dashboard
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: traefik-dashboard
+            port:
+              number: 8080
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: traefik-dashboard
+            port:
+              number: 8080
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: traefik-dashboard
+            port:
+              number: 9100   # metrics port

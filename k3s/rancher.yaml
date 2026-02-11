@@ -1,0 +1,52 @@
+# Rancher Helm Values
+# For use with Traefik ingress and external TLS termination (NPM)
+
+# Hostname for Rancher
+hostname: rancher.dijitle.dev
+
+# Replicas for high availability (can be 1 for single node or home lab)
+replicas: 1
+
+# Use Traefik as ingress controller
+ingress:
+  enabled: true
+  ingressClassName: traefik
+
+# Bootstrap password for initial admin login
+# Change this after first login!
+bootstrapPassword: "admin"
+
+# Resource limits for Raspberry Pi
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Liveness and readiness probes
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# Use system-default-registry for air-gapped or custom registry
+# systemDefaultRegistry: ""
+
+# Additional environment variables
+extraEnv:
+  - name: CATTLE_FEATURES
+    value: "multi-cluster-management=false"
+
+# Anti-affinity to spread replicas across nodes (if replicas > 1)
+antiAffinity: preferred
+
+# Tolerations for control plane nodes if needed
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule

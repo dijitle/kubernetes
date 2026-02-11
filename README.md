@@ -1,188 +1,137 @@
-# kubernetes
+# K3S
 
-Step by step guide to installing kubernetes on raspberry pis
+## physical infrastructure
 
-I will be creating a 3 master, 4 worker node setup. (7, heptagon, kubernetes, get it?)
+| name | IP | type | CPU | RAM | Role |
+| ---- | -- | ---- | --- | --- | ---- |
+| dijitle-k3s-m1 | 192.168.4.11 | Raspberry Pi 3b+ | 4 core | 1GB | worker |
+| dijitle-k3s-m2 | 192.168.4.12 | Raspberry Pi 3b+ | 4 core | 1GB | worker |
+| dijitle-k3s-m3 | 192.168.4.13 | Raspberry Pi 3b+ | 4 core | 1GB | worker |
+| dijitle-k3s-w1 | 192.168.4.101 | Raspberry Pi 4b | 4 core | 4GB | master |
+| dijitle-k3s-w2 | 192.168.4.102 | Raspberry Pi 4b | 4 core | 4GB | master |
+| dijitle-k3s-w3 | 192.168.4.103 | Raspberry Pi 4b | 4 core | 4GB | master |
+| dijitle-k3s-w4 | 192.168.4.104 | Raspberry Pi 4b | 4 core | 4GB | worker |
 
-### Items
+`192.168.4.10` will be a VIP for .11, .12 and .13 for HA.
+###### Note: the pi 3s did not have enough memory to be the masters, so moved them to w1-3... it bothers a bit, but too much to redo all the networking and hostnames
 
-- 7 raspberry pis + SD cards
-  - 3x raspberry pi 3s w/1GB RAM for master nodes
-  - 4x raspberry pi 4s w/4GB RAM for worker nodes
-    - One of these will be my NFS and loadbalancing server
-- 7 PoE raspberry pi hats
-- 4 128GB usb 3 flash drives
-- Router running dd-wrt firmware
-- 8 port network switch with PoE
-- 9 Ethranet cables
-  - 7 pis to switch
-  - 1 switch to router
-  - 1 router to internet
+## Provisioning
+Use Raspberry Pi Imager to create SD cards/usb thumbdrives for Raspberry Pi OS (other) > Raspberry Pi OS Lite (64-bit)
+Set static IPs on the network accordingly
 
-### Network Topology
-
-| Host                 | Static IP       | Port Forward (router) | Purpose             |
-| -------------------- | --------------- | --------------------- | ------------------- |
-| dijitle-k8s-router   | 192.168.108.1   | 8080 -> 80            | Router admin        |
-| virtualIP            | 192.168.108.10  | 80, 443, 6443         | http(s) and k8s api |
-| dijitle-k8s-master-1 | 192.168.108.11  | 9011 -> 22            | ssh                 |
-| dijitle-k8s-master-2 | 192.168.108.12  | 9012 -> 22            | ssh                 |
-| dijitle-k8s-master-3 | 192.168.108.13  | 9013 -> 22            | ssh                 |
-| dijitle-k8s-worker-1 | 192.168.108.101 | 9101 -> 22            | ssh                 |
-| dijitle-k8s-worker-2 | 192.168.108.102 | 9102 -> 22            | ssh                 |
-| dijitle-k8s-worker-3 | 192.168.108.103 | 9103 -> 22            | ssh                 |
-| dijitle-k8s-worker-4 | 192.168.108.104 | 9104 -> 22            | ssh                 |
-
-Only 80 and 443 should be exposed to the internet!
-
-The three master nodes will run keepalived which will create a highly-available virutal IP (192.168.108.10). Master-1 will be primary and should it go down, master-2 will take over, and should both go down, master-3 will take over. If all three go down...well, then it's down.
-
-[guide](https://stackoverflow.com/questions/35482083/how-to-create-floating-ip-and-use-it-to-configure-haproxy)
-
-Each master node will run HA-Proxy that will reverse-proxy and load-balance traffic and run let's encrypt (certbot) to create a valid public certificate.
-
-#### HA-Proxy
-
-| Incoming port | To port                  | Hosts                       |
-| ------------- | ------------------------ | --------------------------- |
-| 80            | 443 (redirect 301)       |                             |
-| 443           | 30330 (traefik nodePort) | worker 1-4 (round robin LB) |
-| 6443          | 6443 (kubernetes api)    | master 1-3 (round robin LB) |
-
-### Kubernetes Services
-
-- traefik
-- kubernetes dashboard
-- prometheus/alertmanger
-- fluent-bit
-- loki
-- grafana
-
-## Creating the cluster
-
-1. Download the latest [Raspian lite image](https://www.raspberrypi.org/downloads/raspbian/)
-2. balenaEtcher the SDs with the images
-3. enable SSH access (put empty `ssh` file in boot partition)
-4. set router to forward port 22 to the pi
-5. Run `sudo raspi-config` set hostname, change password, locale, timezone accordingly, enable ssh
-
-## Installing prerequisite
-
-1. Install docker (as sudo)
-
-```
-curl -sSL https://get.docker.com | sh
-usermod -aG docker pi
-```
-
-2. install kubeadm (as sudo)
-
-```
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-sudo apt-key add - && echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | \
-sudo tee /etc/apt/sources.list.d/kubernetes.list && sudo apt-get update -q
-apt-get update
-apt-get install -y kubelet kubeadm kubectl docker-compose
-alias k=kubectl
-source <(kubectl completion bash | sed s/kubectl/k/g)
-```
-
-3. disable swap
-
+### all
 ```bash
-swapoff -a
-dphys-swapfile swapoff && \
-dphys-swapfile uninstall && \
-update-rc.d dphys-swapfile remove && \
-systemctl disable dphys-swapfile
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt autoremove -y
+sudo apt autoclean
+sudo apt install -y curl wget git jq net-tools vim htop nfs-common
+
+sudo swapoff -a
+sudo mkdir -p /etc/rpi/swap.conf.d/
+sudo tee /etc/rpi/swap.conf.d/99-disable-swap.conf >/dev/null <<EOF
+[Main]
+Mechanism=none
+EOF
+sudo systemctl mask swap.target
+
+
+sudo nano /boot/firmware/cmdline.txt
+# Add this to the existing line (space-separated):
+cgroup_memory=1 cgroup_enable=memory
+
+sudo reboot
 ```
 
-4. add to /boot/cmdline.txt
-
+### 1st master
 ```bash
-cgroup_enable=cpuset cgroup_enable=memory
-```
+curl -fL https://get.k3s.io | sh -s - server --cluster-init --tls-san 192.168.4.10 --disable traefik
 
-4. add usb drive (worker nodes)
-
-```
-parted /dev/sda
-
-parted
-
-(parted)rm 1
-(parted)mkpart primary ext4 2048s 100%
-(parted)quit
-
-mkfs.ext4 /dev/sda1
-
-mount /dev/sda1 /srv
-
-blkid #grab uuid for /dev/sda1
-nano /etc/fstab
-UUID=<youruuidhere> /srv ext4 defaults,noatime,rw,nofail 0 0
-```
-
-5. Update /etc/docker/daemon.json
-
-```
-{
-  "data-root": "/srv/docker"
-}
-```
-
-6. Restart docker
-
-```bash
-service docker restart
-```
-
-### Keepalived
-
-```bash
-apt-get install keepalived
-```
-
-copy config to /etc/keepalived/keepalived.conf, change priority 102 in decenting order
-
-### Let's Encrypt
-
-1.
-
-```bash
-apt-get update && apt-get install -y certbot
+sudo cat /var/lib/rancher/k3s/server/node-token #save this for later
 ```
 
 ```bash
-certbot certonly
-```
+$ sudo k3s kubectl get nodes
+NAME             STATUS   ROLES                AGE   VERSION
+dijitle-k3s-m1   Ready    control-plane,etcd   15s   v1.34.3+k3s3
+``` 
 
 ```bash
-cat /etc/letsencrypt/live/dijitle.com/fullchain.pem /etc/letsencrypt/live/dijitle.com/privkey.pem > /etc/ssl/haproxy.pem
+sudo cat /etc/rancher/k3s/k3s.yaml
+#copy to local ~/.kube/config, replace with server: https://192.168.4.11:6443 for now, we'll change to the VIP once installed
 ```
 
-```bash
-docker run --name haproxy -p 192.168.108.10:6444:6444 -p 192.168.108.10:443:443 -p 192.168.108.10:80:80 -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg -v /etc/ssl/haproxy.pem:/etc/ssl/haproxy.pem -d haproxy
+```powershell
+helm repo add kube-vip https://kube-vip.github.io/helm-charts
+helm repo update
+
+helm upgrade --install kube-vip kube-vip/kube-vip --namespace kube-system -f .\k3s\kube-vip.yaml
 ```
 
-### Install K8s
+change ~/.kube/config to .10
+```powershell
+> kubectl get nodes 
+NAME             STATUS   ROLES                AGE   VERSION
+dijitle-k3s-m1   Ready    control-plane,etcd   32m   v1.34.3+k3s3
+```
+good times!
 
+### 2nd and 3rd master
 ```bash
-sysctl net.bridge.bridge-nf-call-iptables=1
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--server https://192.168.4.10:6443 --tls-san 192.168.4.10 --disable traefik" \
+  K3S_TOKEN=your-node-token-here sh -
 
-nano /etc/sysctl.conf
-#uncomment net.ipv4.ip_forward = 1 and add net.ipv4.ip_nonlocal_bind=1.
+sudo rm -f /var/lib/rancher/k3s/server/manifests/traefik.yaml
+```
+### On all workers
+```bash
+curl -sfL https://get.k3s.io | K3S_URL=https://192.168.4.10:6443 K3S_TOKEN=mynodetoken sh -
 ```
 
-#### On master 1
-
-```bash
-kubeadm init --control-plane-endpoint "192.168.108.10:6444" --upload-certs --ignore-preflight-errors=Mem
+Check everything is up and running
+```powershell
+> kubectl get nodes
+NAME             STATUS   ROLES                AGE    VERSION
+dijitle-k3s-m1   Ready    <none>               133m   v1.34.3+k3s3
+dijitle-k3s-m2   Ready    <none>               133m   v1.34.3+k3s3
+dijitle-k3s-m3   Ready    <none>               133m   v1.34.3+k3s3
+dijitle-k3s-w1   Ready    control-plane,etcd   139m   v1.34.3+k3s3
+dijitle-k3s-w2   Ready    control-plane,etcd   135m   v1.34.3+k3s3
+dijitle-k3s-w3   Ready    control-plane,etcd   135m   v1.34.3+k3s3
+dijitle-k3s-w4   Ready    <none>               134m   v1.34.3+k3s3
 ```
 
-Grab master join command, run on other masters
-Grab worker join command, run on workers
+## Traefik
+```powershell
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
 
-```bash
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+helm upgrade --install traefik traefik/traefik --namespace kube-system -f .\k3s\traefik.yaml
+kubectl apply -f .\k3s\traefik-ingress.yaml
+```
+
+## NFS-provisioner
+```powershell
+helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+helm repo update
+
+helm upgrade --install nfs-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --namespace kube-system -f .\k3s\nfs-provisioner.yaml
+```
+
+## Monitoring and logging
+```powershell
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+helm upgrade --install alloy grafana/alloy --namespace kube-system -f .\k3s\alloy.yaml
+```
+
+## Rancher
+```powershell
+helm repo add jetstack https://charts.jetstack.io
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo update
+
+helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true 
+helm upgrade --install rancher rancher-stable/rancher --namespace cattle-system --create-namespace --values .\k3s\rancher.yaml
 ```

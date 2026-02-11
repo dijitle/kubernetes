@@ -1,0 +1,32 @@
+# values.yaml
+config:
+  address: 192.168.4.10
+
+env:
+  interface: eth0          # change to your actual iface (ip link show)
+  vip_arp: true
+  cp_enable: "true"
+  vip_leaderelection: "true"
+  lb_enable: "false"
+  svc_enable: "false"
+  vip_subnet: "32"
+  prometheus_server: ":2112"
+
+image:
+  repository: ghcr.io/kube-vip/kube-vip
+  tag: latest              # or pin a version like v0.8.11
+
+rbac:
+  create: true
+
+securityContext:
+  capabilities:
+    add: ["NET_ADMIN", "NET_RAW"]
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"

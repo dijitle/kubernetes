@@ -1,1 +1,0 @@
-# helm -n monitoring upgrade -i loki loki/loki

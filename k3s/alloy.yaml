@@ -1,0 +1,248 @@
+alloy:
+  configMap:
+    content: |
+      // ===== METRICS COLLECTION =====
+      
+      // Built-in node exporter for system metrics
+      prometheus.exporter.unix "node" {
+        // This runs on each node (via DaemonSet) and exports node metrics
+      }
+
+      // Scrape the local node exporter
+      prometheus.scrape "node_exporter" {
+        targets    = prometheus.exporter.unix.node.targets
+        forward_to = [prometheus.remote_write.prom.receiver]
+        
+        scrape_interval = "30s"
+        
+        // Add node name label
+        clustering {
+          enabled = true
+        }
+      }
+
+      // Alloy's own metrics
+      prometheus.exporter.self "alloy" {
+      }
+
+      prometheus.scrape "alloy" {
+        targets    = prometheus.exporter.self.alloy.targets
+        forward_to = [prometheus.remote_write.prom.receiver]
+        
+        scrape_interval = "30s"
+      }
+
+      // Discover Kubernetes services for scraping
+      discovery.kubernetes "services" {
+        role = "service"
+      }
+
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // Scrape pods with prometheus.io annotations
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        // Keep only pods with prometheus.io/scrape: "true"
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+          regex         = "true"
+          action        = "keep"
+        }
+
+        // Use custom port if specified
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_port"]
+          regex         = "(.+)"
+          target_label  = "__meta_kubernetes_pod_container_port_number"
+          action        = "replace"
+        }
+
+        // Set the scrape address
+        rule {
+          source_labels = ["__meta_kubernetes_pod_ip", "__meta_kubernetes_pod_container_port_number"]
+          regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+          target_label  = "__address__"
+          replacement   = "$1:$2"
+        }
+
+        // Use custom path if specified
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+          regex         = "(.+)"
+          target_label  = "__metrics_path__"
+          action        = "replace"
+        }
+
+        // Add namespace label
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        // Add pod name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        // Add container name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+
+        // Add node name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+      }
+
+      prometheus.scrape "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [prometheus.remote_write.prom.receiver]
+        
+        scrape_interval = "30s"
+      }
+
+      // Send metrics to Prometheus on TrueNAS
+      prometheus.remote_write "prom" {
+        endpoint {
+          url = "http://192.168.1.11:30104/api/v1/write"
+          
+          queue_config {
+            capacity          = 10000
+            max_shards        = 10
+            max_samples_per_send = 5000
+          }
+        }
+      }
+
+      // ===== LOG COLLECTION =====
+
+      // Discover pods for log collection
+      discovery.kubernetes "pod_logs" {
+        role = "pod"
+      }
+
+      // Relabel to get pod logs
+      discovery.relabel "pod_logs" {
+        targets = discovery.kubernetes.pod_logs.targets
+
+        // Set the path to the pod logs
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          target_label  = "__path__"
+          separator     = "/"
+          replacement   = "/var/log/pods/*$1/*.log"
+        }
+
+        // Add namespace label
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        // Add pod name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        // Add container name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+
+        // Add node name label
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+
+        // Add job label
+        rule {
+          replacement  = "kubernetes-pods"
+          target_label = "job"
+        }
+      }
+
+      // Tail the logs
+      loki.source.kubernetes "pod_logs" {
+        targets    = discovery.relabel.pod_logs.output
+        forward_to = [loki.process.pod_logs.receiver]
+      }
+
+      // Process logs (extract JSON, add labels, etc.)
+      loki.process "pod_logs" {
+        // Extract log level if present
+        stage.regex {
+          expression = "level=(?P<level>\\w+)"
+        }
+
+        stage.labels {
+          values = {
+            level = "",
+          }
+        }
+
+        forward_to = [loki.write.loki.receiver]
+      }
+
+      // Send logs to Loki on TrueNAS
+      loki.write "loki" {
+        endpoint {
+          url = "http://192.168.1.11:33100/loki/api/v1/push"
+          
+          // Optional: add batch settings for efficiency
+          batch_wait = "1s"
+          batch_size = "1MiB"
+        }
+      }
+
+# Controller settings for DaemonSet deployment (recommended for log collection)
+controller:
+  type: "daemonset"
+
+# Service account with RBAC permissions
+serviceAccount:
+  create: true
+
+# RBAC for Kubernetes API access
+rbac:
+  create: true
+
+# Resource limits for Raspberry Pi
+resources:
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Tolerations to run on all nodes including control plane
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+# Volume mounts for log collection
+extraVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+    readOnly: true
+  - name: varlibdockercontainers
+    mountPath: /var/lib/docker/containers
+    readOnly: true
+
+# Define the volumes
+extraVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+  - name: varlibdockercontainers
+    hostPath:
+      path: /var/lib/docker/containers

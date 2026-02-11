@@ -1,0 +1,51 @@
+# traefik-values.yaml
+
+image:
+  tag: "v3.2.0"  # or v3.1.x if you prefer; avoid v2.x for newer features
+
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    nodePort: 30330          # fixed for Truenas forward → Pi-IP:30330
+    protocol: TCP
+  websecure:
+    expose:
+      default: false
+  traefik:                   # dashboard/API (8080 internal)
+    port: 8080
+    expose:
+      default: false
+  metrics:                   # Prometheus metrics (9100 internal)
+    port: 9100
+    expose:
+      default: false
+
+additionalArguments:
+  - "--api=true"
+  - "--api.dashboard=true"
+  - "--api.insecure=true"               # required for vanilla Ingress to /dashboard/ + /api/
+  - "--metrics.prometheus=true"
+  - "--providers.kubernetesingress=true"
+  - "--entrypoints.web.http.redirections.entryPoint.to="  # no HTTPS redirect
+
+providers:
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: true
+  kubernetesCRD:
+    enabled: false                      # correct casing - disables CRDs/IngressRoute
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+
+service:
+  type: NodePort
+
+logs:
+  general:
+    level: INFO                         # set to DEBUG if still debugging

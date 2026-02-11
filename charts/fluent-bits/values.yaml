@@ -1,7 +1,0 @@
-image:
-  repository: dijitle/fluent-bit-plugin-loki
-  tag: 1.5.0
-loki: 
-  serviceName: loki
-
-#helm -n monitoring upgrade -i fluent-bit loki/fluent-bit -f .\charts\fluent-bits\values.yaml   
