@@ -30,6 +30,8 @@ additionalArguments:
   - "--metrics.prometheus=true"
   - "--providers.kubernetesingress=true"
   - "--entrypoints.web.http.redirections.entryPoint.to="  # no HTTPS redirect
+  - "--entryPoints.web.proxyProtocol.insecure"
+  - "--entryPoints.web.forwardedHeaders.insecure"
 
 providers:
   kubernetesIngress:

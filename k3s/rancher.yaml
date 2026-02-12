@@ -11,28 +11,50 @@ replicas: 1
 ingress:
   enabled: true
   ingressClassName: traefik
+  tls:
+    source: external
+tls: external
 
 # Bootstrap password for initial admin login
 # Change this after first login!
 bootstrapPassword: "admin"
 
+# NFS Persistent Volume for faster restarts
+persistence:
+  enabled: true
+  storageClass: "nfs-client"  # Change this to your NFS StorageClass name
+  size: 10Gi
+  accessMode: ReadWriteOnce
+
 # Resource limits for Raspberry Pi
 resources:
   limits:
-    cpu: 1000m
-    memory: 2Gi
+    cpu: 2000m
+    memory: 4Gi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 500m
+    memory: 1Gi
 
 # Liveness and readiness probes
 livenessProbe:
-  initialDelaySeconds: 60
+  initialDelaySeconds: 120
   periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 5
 
 readinessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 5
+
+# Startup probe for initial boot (helps with slow Raspberry Pi startup)
+startupProbe:
   initialDelaySeconds: 10
   periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30  # 5 minutes total (30 * 10s)
+
 
 # Use system-default-registry for air-gapped or custom registry
 # systemDefaultRegistry: ""
@@ -41,6 +63,10 @@ readinessProbe:
 extraEnv:
   - name: CATTLE_FEATURES
     value: "multi-cluster-management=false"
+  - name: CATTLE_BOOTSTRAP_SKIP_GET_URL
+    value: "true"
+  - name: CATTLE_SERVER_URL
+    value: "https://rancher.dijitle.dev"
 
 # Anti-affinity to spread replicas across nodes (if replicas > 1)
 antiAffinity: preferred
