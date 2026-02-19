@@ -12,6 +12,7 @@ alloy:
       prometheus.scrape "node_exporter" {
         targets    = prometheus.exporter.unix.node.targets
         forward_to = [prometheus.remote_write.prom.receiver]
+        honor_timestamps = false
         
         scrape_interval = "30s"
         
@@ -28,6 +29,7 @@ alloy:
       prometheus.scrape "alloy" {
         targets    = prometheus.exporter.self.alloy.targets
         forward_to = [prometheus.remote_write.prom.receiver]
+        honor_timestamps = false
         
         scrape_interval = "30s"
       }
@@ -48,11 +50,20 @@ alloy:
           action        = "keep"
         }
 
-        // Use custom port if annotated (default to the service's first port if missing)
+        // Use custom port if annotated (set numeric annotation to port number)
         rule {
           source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_port"]
-          regex         = "(.+)"
-          target_label  = "__meta_kubernetes_service_port_name"  // or directly to port number if numeric
+          regex         = "([0-9]+)"
+          target_label  = "__meta_kubernetes_service_port_number"
+          action        = "replace"
+        }
+
+        // If annotation present, build address from cluster IP + annotated port
+        rule {
+          source_labels = ["__meta_kubernetes_service_cluster_ip","__meta_kubernetes_service_annotation_prometheus_io_port"]
+          regex         = "([^:]+);(.+)"
+          target_label  = "__address__"
+          replacement   = "$1:$2"
           action        = "replace"
         }
 
@@ -61,15 +72,15 @@ alloy:
         rule {
           source_labels = ["__meta_kubernetes_service_port_name"]
           regex         = "(metrics|http-metrics|prometheus|http)"
-          action        = "keep"  // or set default
+          action        = "keep"
         }
 
-        // Build the scrape address from service cluster IP + port
+        // Build the scrape address from service cluster IP + port number
         rule {
-          source_labels = ["__meta_kubernetes_service_cluster_ip", "__address__"]  // __address__ might already have port
-          regex         = "([^:]+)(?::\\d+)?;(.+)"
+          source_labels = ["__meta_kubernetes_service_cluster_ip","__meta_kubernetes_service_port_number"]
+          regex         = "([^:]+);(\\d+)"
           target_label  = "__address__"
-          replacement   = "$1:$2"  // Adjust if port is separate
+          replacement   = "$1:$2"
           action        = "replace"
         }
 
@@ -78,6 +89,15 @@ alloy:
           source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_path"]
           regex         = "(.+)"
           target_label  = "__metrics_path__"
+          action        = "replace"
+        }
+
+        // Default metrics path if not provided
+        rule {
+          source_labels = ["__metrics_path__"]
+          regex         = ""
+          target_label  = "__metrics_path__"
+          replacement   = "/metrics"
           action        = "replace"
         }
 
@@ -108,6 +128,10 @@ alloy:
         
         // Optional: honor labels from service
         honor_labels = true
+
+        // Avoid forwarding scraped timestamps to remote_write to prevent
+        // "out of order sample" rejections at the receiver
+        honor_timestamps = false
       }
 
       discovery.kubernetes "pods" {
@@ -177,7 +201,8 @@ alloy:
       prometheus.scrape "pods" {
         targets    = discovery.relabel.pods.output
         forward_to = [prometheus.remote_write.prom.receiver]
-        
+        honor_timestamps = false
+
         scrape_interval = "30s"
       }
 
