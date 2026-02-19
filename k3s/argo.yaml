@@ -1,0 +1,51 @@
+global:
+  domain: argocd.dijitle.dev
+  addPrometheusAnnotations: true
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"   
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    hosts:
+      - argocd.dijitle.dev
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+        prometheus.io/path: "/metrics"
+
+configs:
+  params:
+    server.insecure: "true"
+
+applicationSet:
+  enabled: true
+
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false  # We'll use Alloy instead of ServiceMonitor
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"  # Controller metrics port
+        prometheus.io/path: "/metrics"
+
+repoServer:
+  metrics:
+    enabled: true

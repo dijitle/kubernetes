@@ -135,3 +135,11 @@ helm repo update
 helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true 
 helm upgrade --install rancher rancher-stable/rancher --namespace cattle-system --create-namespace --values .\k3s\rancher.yaml
 ```
+
+## Argo CD
+```powershell
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+
+helm upgrade --install agrocd argo/argo-cd --namespace argocd --create-namespace --values .\k3s\argo.yaml
+```

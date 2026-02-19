@@ -37,6 +37,79 @@ alloy:
         role = "service"
       }
 
+      // Relabel for services with prometheus.io/scrape: "true"
+      discovery.relabel "services" {
+        targets = discovery.kubernetes.services.targets
+
+        // Only keep services annotated for scraping
+        rule {
+          source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+          regex         = "true"
+          action        = "keep"
+        }
+
+        // Use custom port if annotated (default to the service's first port if missing)
+        rule {
+          source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_port"]
+          regex         = "(.+)"
+          target_label  = "__meta_kubernetes_service_port_name"  // or directly to port number if numeric
+          action        = "replace"
+        }
+
+        // If no port annotation, fall back to common metrics port names or first port
+        // (optional but helpful; many charts use "metrics" or "http-metrics")
+        rule {
+          source_labels = ["__meta_kubernetes_service_port_name"]
+          regex         = "(metrics|http-metrics|prometheus|http)"
+          action        = "keep"  // or set default
+        }
+
+        // Build the scrape address from service cluster IP + port
+        rule {
+          source_labels = ["__meta_kubernetes_service_cluster_ip", "__address__"]  // __address__ might already have port
+          regex         = "([^:]+)(?::\\d+)?;(.+)"
+          target_label  = "__address__"
+          replacement   = "$1:$2"  // Adjust if port is separate
+          action        = "replace"
+        }
+
+        // Prefer annotation for path
+        rule {
+          source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_path"]
+          regex         = "(.+)"
+          target_label  = "__metrics_path__"
+          action        = "replace"
+        }
+
+        // Add useful labels
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_service_name"]
+          target_label  = "service"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_service_label_app_kubernetes_io_name"]
+          target_label  = "app"
+          action        = "replace"
+        }
+      }
+
+      // Scrape the annotated services
+      prometheus.scrape "services" {
+        targets    = discovery.relabel.services.output
+        forward_to = [prometheus.remote_write.prom.receiver]
+        
+        scrape_interval = "30s"
+        
+        // Optional: honor labels from service
+        honor_labels = true
+      }
+
       discovery.kubernetes "pods" {
         role = "pod"
       }
