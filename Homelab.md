@@ -1,4 +1,4 @@
-# Dijitle Homelab 🥼
+# Dijitle Homelab
 
 ## Network 🛜
 - 500mbps fiber wan from Frontier
@@ -7,7 +7,7 @@
 - U6 Pro
 - 2x AC Pro
 
-## Truenas 🐧
+## Truenas 🐧 
 - TrueNAS Scale 24.10
 - Intel Core i7-4771 @ 3.50GHz
 - 32GB ram 4x8GB sticks
@@ -32,6 +32,7 @@
 
 ## HomeAssistant 🏠
 - HP Spectre Laptop
+- HAOS
 - Intel core i5 5200U @ 2.2GHZ
 - 8GB ram
 - 128gb m2 
@@ -93,7 +94,6 @@
 - IP: 192.168.1.12
 
 ## Domains 🌐
-- Cloudflare
 - dijitle.com
 - dijitle.dev
 
