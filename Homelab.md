@@ -41,14 +41,14 @@
 
 ## Reolink 🎦
 - NVR 3TB RLN16-410 (H3MB18)
-- 6x 4k
+- 6x RLC-820A
   - Front door
   - Garage back door
   - Garage 
   - Back door
   - Back yard
   - Server room
-- 1x 5k duo
+- 1x Duo 2v PoE
   - Driveway
 
 ## Raspberry Pi k3s 🍰
