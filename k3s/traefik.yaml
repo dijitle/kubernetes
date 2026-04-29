@@ -1,7 +1,7 @@
 # traefik-values.yaml
 
 image:
-  tag: "v3.2.0"  # or v3.1.x if you prefer; avoid v2.x for newer features
+  tag: "v3.6.9"  # or v3.1.x if you prefer; avoid v2.x for newer features
 
 ports:
   web:
@@ -32,6 +32,8 @@ additionalArguments:
   - "--entrypoints.web.http.redirections.entryPoint.to="  # no HTTPS redirect
   - "--entryPoints.web.proxyProtocol.insecure"
   - "--entryPoints.web.forwardedHeaders.insecure"
+  - "--providers.kubernetesingress.ingressendpoint.publishedservice=kube-system/traefik"
+  - "--providers.kubernetesingress.ingressendpoint.ip=192.168.4.10"
 
 providers:
   kubernetesIngress:

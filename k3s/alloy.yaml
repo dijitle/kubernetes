@@ -301,6 +301,39 @@ alloy:
           batch_size = "1MiB"
         }
       }
+      // Receive OTLP traces from your k3s apps (gRPC + HTTP)
+      otelcol.receiver.otlp "default" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+
+        output {
+          traces = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      // Batch processor - now with required output to send batched traces onward
+      otelcol.processor.batch "default" {
+        timeout             = "5s"       // Flush batch after 5s of inactivity
+        send_batch_size     = 1000       // Aim for batches of ~1000 items
+        send_batch_max_size = 2000       // Hard cap to prevent huge batches on bursty traffic
+
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]  // Forward to your exporter's input
+        }
+      }
+
+      // Export to Tempo on TrueNAS (gRPC for better performance)
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "http://192.168.1.11:34317"  // Replace with actual IP/DNS:4317 (gRPC)
+          // compression = "gzip"                               // Optional: good for WAN if TrueNAS is remote
+          // tls { insecure_skip_verify = true }                // Temp for testing; add proper certs later
+        }
+      }
 
 # Controller settings for DaemonSet deployment (recommended for log collection)
 controller:

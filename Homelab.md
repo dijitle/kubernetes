@@ -1,11 +1,33 @@
 # Dijitle Homelab
 
 ## Network 🛜
-- 500mbps fiber wan from Frontier
-- UDM Pro 
-- USW 24 PoE 
-- U6 Pro
-- 2x AC Pro
+- Oakdale
+  - 500mbps fiber - Frontier
+  - UDM Pro 
+  - USW 24 PoE 
+  - U6 Pro 
+    - 2nd floor
+  - AC Pro 
+    - 1st floor 
+    - basement
+- Glenbrook
+  - 100mpbs fiber - Surf
+  - Express
+#### VLANs
+  - Main
+    - 192.168.1.0/24
+  - Dijitle VPN
+    - 192.168.2.0/24
+  - Guest 
+    - 192.168.3.0/24
+  - Kubernetes
+    - 192.168.4.0/24
+  - IoT
+    - 192.168.5.0/24
+  - NoT
+    - 192.168.6.0/24
+  - Glenbrook
+    - 192.168.8.0/24
 
 ## Truenas 🐧 
 - TrueNAS Scale 24.10
@@ -16,19 +38,19 @@
 - SSD: ata-Samsung_SSD_850_EVO_500GB_S3PTNB0JC29540J (Boot)
 - 3x HDD: ata-ST12000VN0007-2GS116_*
 - VDEV 1 x RAIDZ1 | 3 wide | 10.91 TiB
-- IP: 192.168.1.11
-- Apps
-    - graphite-exporter (from truenas)
-    - Loki (logs)
-    - Tempo (trace)
-    - prometheus (timeseries)
-    - grafana
-    - immich
-    - makemkv
-    - nextcloud
-    - plex
-    - open-webui
-    - nginx-proxy-manager
+- 192.168.1.11
+#### Apps
+- graphite-exporter (for truenas)
+- Loki (logs)
+- Tempo (trace)
+- prometheus (timeseries)
+- grafana (dashboard)
+- immich
+- makemkv
+- nextcloud
+- plex
+- open-webui
+- nginx-proxy-manager
 
 ## HomeAssistant 🏠
 - HP Spectre Laptop
@@ -37,7 +59,8 @@
 - 8GB ram
 - 128gb m2 
 - intel hd graphics 5500
-- IP: 192.168.1.23:8123
+- USB A to Ethranet dongle
+- 192.168.1.23:8123
 
 ## Reolink 🎦
 - NVR 3TB RLN16-410 (H3MB18)
@@ -50,6 +73,7 @@
   - Server room
 - 1x Duo 2v PoE
   - Driveway
+- 192.168.1.42
 
 ## Raspberry Pi k3s 🍰
 - 3x Raspberry Pi 3s 1GB + 32GB usb thumbdrive
@@ -84,6 +108,7 @@
 - 32GB RAM
 - Micron 2300 NVMe 512GB
 - NVidia Quadro T2000 with Max-Q Design
+- 3840x2400 touchscreen
 
 ## Mac Mini 🍏
 - A1347 Late 2014 model
@@ -93,11 +118,12 @@
 - macOS Monterey
 - IP: 192.168.1.12
 
+## 3D printer 🖨️
+- Creality Ender 3 Pro
+- Octopi software on raspberry pi 3b
+- Upgraded motherboard 32bit TMC2225 Marlin 2.0.1
+- 192.168.5.5
+
 ## Domains 🌐
 - dijitle.com
 - dijitle.dev
-
-
-
-
-	
