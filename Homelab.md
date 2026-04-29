@@ -57,21 +57,21 @@
 - HAOS
 - Intel core i5 5200U @ 2.2GHZ
 - 8GB ram
-- 128gb m2 
+- 128GB m.2 
 - intel hd graphics 5500
 - USB A to Ethranet dongle
 - 192.168.1.23:8123
 
 ## Reolink 🎦
 - NVR 3TB RLN16-410 (H3MB18)
-- 6x RLC-820A
+- RLC-820A
   - Front door
   - Garage back door
   - Garage 
   - Back door
   - Back yard
   - Server room
-- 1x Duo 2v PoE
+- Duo 2v PoE
   - Driveway
 - 192.168.1.42
 
