@@ -55,7 +55,8 @@
 ## HomeAssistant 🏠
 - HP Spectre Laptop
 - HAOS
-- Intel core i5 5200U @ 2.2GHZ
+- Intel core i5 5200U @ 2.2GHz
+  - 2 core / 4 thread
 - 8GB ram
 - 128GB m.2 
 - intel hd graphics 5500
@@ -76,8 +77,10 @@
 - 192.168.1.42
 
 ## Raspberry Pi k3s 🍰
-- 3x Raspberry Pi 3s 1GB + 32GB usb thumbdrive
-- 4x Raspberry Pi 4s 4GB + 128GB usb 3 thumbdrive
+- 3x Raspberry Pi 3s 1GB + 32GB usb thumbdrive + PoE hat
+- 4x Raspberry Pi 4s 4GB + 128GB usb 3 thumbdrive + PoE hat
+
+see [README](./README.md) for more info
 
 ## IoT 💡
 - Lutron hub for light switches
