@@ -40,7 +40,7 @@
 - VDEV 1 x RAIDZ1 | 3 wide | 10.91 TiB
 - 192.168.1.11
 #### Apps
-- graphite-exporter (for truenas)
+- graphite-exporter (truenas)
 - Loki (logs)
 - Tempo (trace)
 - prometheus (timeseries)
@@ -89,26 +89,52 @@
 - Lockley front door lock
 - ecobee thermostat
 - tp-link outlets with energy monitoring and color lightbulbs
+- LG appliances Thinq
+  - Washer
+  - Dryer
+  - Dishwasher
+  - Refridgerator
+  - Oven
 
 ## Main Computer 🖥️
 - Custom Build
-- AMD Ryzen Threadripper 2950X 16-Core Processor @ 4.00 GHz
+- AMD Ryzen Threadripper 2950X Processor @ 4.00 GHz
+  - 16 core / 32 thread
+  - 16x64 + 16x32 L1, 16x512 L2, 4x8M L3
+  - 180 Watt TDP
   - AIO 360mm radiator
-- GSKill trident 1600MHz 4x8GB RGB
-- 2x NVMe Samsung SSD 970 Prod 512GB
+- Asus ROG Strix X399-E Gaming motherboard
+- 32GB RAM 
+  - GSKill trident Z 1600MHz 4x8GB RGB DDR4-3200 / PC4-25600 16-18-18-38 XMP 
+- 2x NVMe Samsung SSD 970 Pro 512GB
 - HDD 4TB WDC WD40EFRX-68N32N0
-- NVIDIA GeForce RTX 3090 Ti 24GB 
+- NVIDIA GeForce RTX 3090 Ti 
+  - PCIe x4.0 x16 (16.0 GT/s) @ x16 (2.5GT/s)
+  - 24GB GDDR6X SDRAM 384-bit
   - watercooled 240mm radiator
+- Thermaltake toughpower grand 1200 Watt 80Plus-Platinum 
 - Windows 11 with WSL
 - IP: 192.168.1.10
 
 ## Laptop 💻
 - Dell Precision 5550
-- Intel core i7-10850H 6-core @ 2.70GHz
+- Intel core i7-10850H @ 2.70GHz
+  - 6 core / 12 thread
 - 32GB RAM
 - Micron 2300 NVMe 512GB
 - NVidia Quadro T2000 with Max-Q Design
 - 3840x2400 touchscreen
+
+## Surface 🖊️
+- Microsoft Surface Pro 7
+- Intel Core i5-1035G4 @ 1.10 GHz
+  - 4 core / 8 thread
+- 8GB RAM
+- 128GB NVMe x4 8.0 GT/s
+- Intel Iris Graphics 940
+- 2736x1824 touchscreen
+- Surface pen
+- Keyboard cover
 
 ## Mac Mini 🍏
 - A1347 Late 2014 model
